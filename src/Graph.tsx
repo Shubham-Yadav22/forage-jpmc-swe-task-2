@@ -3,6 +3,10 @@ import { Table } from '@finos/perspective';
 import { ServerRespond } from './DataStreamer';
 import './Graph.css';
 
+import {render} from "react-dom";
+
+
+
 /**
  * Props declaration for <Graph />
  */
@@ -14,7 +18,7 @@ interface IProps {
  * Perspective library adds load to HTMLElement prototype.
  * This interface acts as a wrapper for Typescript compiler.
  */
-interface PerspectiveViewerElement {
+interface PerspectiveViewerElement extends HTMLElement {
   load: (table: Table) => void,
 }
 
@@ -26,13 +30,13 @@ class Graph extends Component<IProps, {}> {
   // Perspective table
   table: Table | undefined;
 
-  render() {
+    render() {
     return React.createElement('perspective-viewer');
   }
 
   componentDidMount() {
     // Get element to attach the table from the DOM.
-    const elem: PerspectiveViewerElement = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
+    const elem = document.getElementsByTagName('perspective-viewer')[0] as unknown as PerspectiveViewerElement;
 
     const schema = {
       stock: 'string',
@@ -46,13 +50,23 @@ class Graph extends Component<IProps, {}> {
     }
     if (this.table) {
       // Load the `table` in the `<perspective-viewer>` DOM reference.
-
-      // Add more Perspective configurations here.
       elem.load(this.table);
+      elem.setAttribute('view', 'y_line');
+      elem.setAttribute('column-pivots', '["stock"]');
+      elem.setAttribute('row-pivots', '["timestamp"]'); // Corrected 'timestamps' to 'timestamp'
+      elem.setAttribute('columns', '["top_ask_price"]'); // Corrected 'colums' to 'columns'
+
+      // Corrected the aggregates to a proper JSON string
+      elem.setAttribute('aggregates', JSON.stringify({
+        "stock": "distinct count",
+        "timestamp": "distinct count",
+        "top_ask_price": "avg",
+        "top_bid_price": "avg"
+      }));
     }
   }
 
-  componentDidUpdate() {
+    componentDidUpdate() {
     // Everytime the data props is updated, insert the data into Perspective table
     if (this.table) {
       // As part of the task, you need to fix the way we update the data props to
@@ -68,6 +82,9 @@ class Graph extends Component<IProps, {}> {
       }));
     }
   }
+
+
+
 }
 
 export default Graph;
